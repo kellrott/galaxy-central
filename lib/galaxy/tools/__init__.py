@@ -1125,15 +1125,18 @@ class DefaultToolState( object ):
         return new_state
 
 
-class ToolOutputBase( object ):
-    def init( self, name, label=None, filters=None, hidden=False ):
+class ToolOutputBase( object, Dictifiable ):
+
+    def __init__( self, name, label=None, filters=None, hidden=False ):
+        super( ToolOutputBase, self ).__init__()
         self.name = name
         self.label = label
         self.filters = filters or []
         self.hidden = hidden
+        self.collection = False
 
 
-class ToolOutput( ToolOutputBase, Dictifiable ):
+class ToolOutput( ToolOutputBase ):
     """
     Represents an output datasets produced by a tool. For backward
     compatibility this behaves as if it were the tuple::
@@ -1145,7 +1148,7 @@ class ToolOutput( ToolOutputBase, Dictifiable ):
 
     def __init__( self, name, format=None, format_source=None, metadata_source=None,
                   parent=None, label=None, filters=None, actions=None, hidden=False ):
-        super( ToolOutputBase, self ).__init__( name, label=label, filters=filters, hidden=hidden )
+        super( ToolOutput, self ).__init__( name, label=label, filters=filters, hidden=hidden )
         self.format = format
         self.format_source = format_source
         self.metadata_source = metadata_source
@@ -1186,7 +1189,8 @@ class ToolOutputCollection( ToolOutputBase ):
     """
 
     def __init__( self, name, collection_type, label=None, filters=None, hidden=False ):
-        super( ToolOutputBase, self ).__init__( name, label=label, filters=filters, hidden=hidden )
+        super( ToolOutputCollection, self ).__init__( name, label=label, filters=filters, hidden=hidden )
+        self.collection = True
         self.collection_type = collection_type
         self.outputs = odict()
 
@@ -1643,7 +1647,8 @@ class Tool( object, Dictifiable ):
         if not out_elem:
             return
         data_dict = odict()
-        for data_elem in out_elem.findall("data"):
+
+        def handle_data_elem( data_elem ):
             output = ToolOutput( data_elem.get("name") )
             output.format = data_elem.get("format", "data")
             output.change_format = data_elem.findall("change_format")
@@ -1659,11 +1664,23 @@ class Tool( object, Dictifiable ):
             output.actions = ToolOutputActionGroup( output, data_elem.find( 'actions' ) )
             output.dataset_collectors = output_collect.dataset_collectors_from_elem( data_elem )
             data_dict[output.name] = output
-        for collection_elem in out_elem.findall("data_collection"):
-            output_collection = ToolOutputCollection(collection_elem.get("name"), collection_elem.get("type"))
+
+        for data_elem in out_elem.findall("data"):
+            handle_data_elem( data_elem )
+
+        for collection_elem in out_elem.findall("collection"):
+            for data_elem in collection_elem.findall("data"):
+                handle_data_elem( data_elem )
+        for collection_elem in out_elem.findall("collection"):
+            name = collection_elem.get( "name" )
+            collection_type = collection_elem.get( "type" )
+            output_collection = ToolOutputCollection( name, collection_type )
             for data_elem in collection_elem.findall("data"):
                 output_name = data_elem.get("name")
-                output_collection.outputs[output_name] = data_dict.pop(output_name)
+                data = data_dict[output_name]
+                assert data
+                del data_dict[output_name]
+                output_collection.outputs[output_name] = data
             self.outputs[output_collection.name] = output_collection
         for output in data_dict.values():
             self.outputs[ output.name ] = output
