@@ -78,6 +78,8 @@ class ToolTestCase( TwillTestCase ):
                     stream_output = galaxy_interactor.get_job_stream( history, output_data, stream=stream )
                     print >>sys.stderr, self._format_stream( stream_output, stream=stream, format=True )
                 raise
+        for output_collection_def in testdef.outputs:
+            pass
 
 
 def build_tests( app=None, testing_shed_tools=False, master_api_key=None, user_api_key=None ):

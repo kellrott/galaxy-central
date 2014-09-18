@@ -138,6 +138,7 @@ class ToolsController( BaseAPIController, UsesVisualizationMixin, UsesHistoryMix
         output_datasets = vars.get( 'out_data', [] )
         rval = {
             "outputs": [],
+            "output_collections": [],
             "jobs": [],
             "implicit_collections": [],
         }
