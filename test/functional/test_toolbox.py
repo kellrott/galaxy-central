@@ -29,10 +29,10 @@ class ToolTestCase( TwillTestCase ):
 
         stage_data_in_history( galaxy_interactor, testdef.test_data(), test_history, shed_tool_id )
 
-        data_list = galaxy_interactor.run_tool( testdef, test_history )
+        data_list, data_collection_list = galaxy_interactor.run_tool( testdef, test_history )
         self.assertTrue( data_list )
 
-        self._verify_outputs( testdef, test_history, shed_tool_id, data_list, galaxy_interactor )
+        self._verify_outputs( testdef, test_history, shed_tool_id, data_list, data_collection_list, galaxy_interactor )
 
         galaxy_interactor.delete_history( test_history )
 
@@ -47,7 +47,7 @@ class ToolTestCase( TwillTestCase ):
             else:
                 raise Exception( "Test parse failure" )
 
-    def _verify_outputs( self, testdef, history, shed_tool_id, data_list, galaxy_interactor ):
+    def _verify_outputs( self, testdef, history, shed_tool_id, data_list, data_collection_list, galaxy_interactor ):
         maxseconds = testdef.maxseconds
         if testdef.num_outputs is not None:
             expected = testdef.num_outputs
@@ -79,7 +79,7 @@ class ToolTestCase( TwillTestCase ):
                     print >>sys.stderr, self._format_stream( stream_output, stream=stream, format=True )
                 raise
         for output_collection_def in testdef.outputs:
-            pass
+            assert output_collection_def.name in data_collection_list
 
 
 def build_tests( app=None, testing_shed_tools=False, master_api_key=None, user_api_key=None ):
