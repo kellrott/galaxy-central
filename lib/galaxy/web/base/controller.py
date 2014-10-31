@@ -1596,6 +1596,8 @@ class UsesStoredWorkflowMixin( SharableItemSecurityMixin, UsesAnnotations ):
         else:
             name = data['name']
         workflow.name = name
+        if 'uuid' in data:
+            workflow.uuid = data['uuid']
         # Assume no errors until we find a step that has some
         workflow.has_errors = False
         # Create each step
@@ -1703,7 +1705,7 @@ class UsesStoredWorkflowMixin( SharableItemSecurityMixin, UsesAnnotations ):
         data['name'] = workflow.name
         data['annotation'] = annotation_str
         if workflow.uuid is not None:
-            data['uuid'] = str(workflow.uuid)  
+            data['uuid'] = str(workflow.uuid)
         data['steps'] = {}
         # For each step, rebuild the form and encode the state
         for step in workflow.steps:
